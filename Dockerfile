@@ -1,6 +1,9 @@
 # pull official base image
 FROM python:3.8.1-alpine
 
+# add bash
+RUN apk add --no-cache bash
+
 # set work directory
 WORKDIR /src
 
