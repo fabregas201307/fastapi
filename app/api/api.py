@@ -1,20 +1,31 @@
 import json
+import subprocess
+import importlib.metadata
 
-
-def read_user():
-    with open('data/users.json') as stream:
-        users = json.load(stream)
-
+def read_user() -> dict:
+    output = subprocess.check_output(['whoami'])
+    users = {"output": output}
     return users
 
 
-def read_questions(position: int):
-    with open('data/questions.json') as stream:
-        questions = json.load(stream)
+def check_package(package: str) -> dict:
+    try:
+        package_version = importlib.metadata.version(package)
+    except importlib.metadata.PackageNotFoundError:
+        package_version = "not available"
+    
+    results = {
+        "package": package,
+        "version": package_version
+    }
+    return results
 
-    for question in questions:
-        if question['position'] == position:
-            return question
+def model_inference(data: str) -> dict:
+    results = {
+        "input": data,
+        "output": data
+    }
+    return results
 
 
 def read_alternatives(question_id: int):
