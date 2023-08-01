@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-fastapi
+  labels:
+    app: mlops-fastapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlops-fastapi
+  template:
+    metadata:
+      labels:
+        app: mlops-fastapi
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: mlops-fastapi
+        image: acrfiquantitprod001.azurecr.io/mlops-fastapi:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+        imagePullPolicy: "Always"
+        volumeMounts:
+        - name: fiquantit-mount
+          # subPath: fiquantit-nfs
+          mountPath: /fiquantit-nfs
+        - name: fiquantit-jupyter-mount
+          mountPath: /fiquantit-jupyter-nfs
+        - name: fiquantit-modef-mount
+          mountPath: /fiquantit-modef-nfs
+        ports:
+        - containerPort: 7878
