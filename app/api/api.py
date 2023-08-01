@@ -1,6 +1,11 @@
 import json
 import subprocess
 import importlib.metadata
+import pandas as pd
+import numpy as np
+import time
+
+
 
 def read_user() -> dict:
     output = subprocess.check_output(['whoami'])
@@ -60,6 +65,29 @@ def create_answer(payload):
         if answers[0] in car.values() and answers[1] in car.values() and answers[2] in car.values():
             result.append(car)
 
+    return result
+
+def teddy_cnn_model_predict(payload) -> list:
+    time.sleep(20)
+    keys = payload.keys()
+    result = list(keys)
+    print("after sleep:")
+    print(result)
+    filename = "/fiquant/mlops" + "mlops_heavy_computing_results.json"
+    with open(filename, "w") as f:
+        json.dump(payload, f, indent=4)
+    return result
+
+def kai_model_predict(message) -> dict:
+    data_dict = message
+    data_received = pd.DataFrame.from_dict(data_dict)
+    data_received = data_received.replace({"None": None})
+
+    data_received = data_received.astype(float)
+    result_df = data_received.describe()
+    result_df = result_df.replace({np.nan: "None"}) # json don't like NaN
+
+    result = result_df.to_dict()
     return result
 
 
