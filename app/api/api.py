@@ -5,8 +5,6 @@ import pandas as pd
 import numpy as np
 import time
 
-
-
 def read_user() -> dict:
     output = subprocess.check_output(['whoami'])
     users = {"output": output}
@@ -24,6 +22,7 @@ def check_package(package: str) -> dict:
         "version": package_version
     }
     return results
+
 
 def model_inference(data: str) -> dict:
     results = {
@@ -67,6 +66,7 @@ def create_answer(payload):
 
     return result
 
+
 def teddy_cnn_model_predict(payload) -> list:
     time.sleep(20)
     keys = payload.keys()
@@ -75,6 +75,7 @@ def teddy_cnn_model_predict(payload) -> list:
     print(result)
     filename = "/fiquant/mlops" + "mlops_heavy_computing_results.json"
     with open(filename, "w") as f:
+        # write the dictionary to the file with indentation
         json.dump(payload, f, indent=4)
     return result
 
@@ -89,6 +90,15 @@ def kai_model_predict(message) -> dict:
 
     result = result_df.to_dict()
     return result
+
+
+
+
+
+
+
+
+
 
 
 def read_result(user_id: int):
