@@ -36,3 +36,64 @@ spec:
           mountPath: /fiquantit-modef-nfs
         ports:
         - containerPort: 7878
+      tolerations:
+      - key: "owner"
+        operator: "Equal"
+        value: "fiquant"
+        effect: "NoSchedule"
+      nodeSelector:
+        owner: "fiquant"
+      volumes:
+      - name: fiquantit-mount
+        persistentVolumeClaim:
+          claimName: nfs-fiquantit-prod
+      - name: fiquantit-jupyter-mount
+        persistentVolumeClaim:
+          claimName: nfs-fiquantit-jupyter
+      - name: fiquantit-modef-mount
+        persistentVolumeClaim:
+          claimName: nfs-fiquantit-modef
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mlops-fastapi
+spec:
+  type: LoadBalancer
+  selector:
+    app: mlops-fastapi
+  ports:
+  - protocal: TCP
+    name: http
+    port: 7878
+    targetPort: 7878
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mlops-fastapi
+  namespace: fiquantit-prod
+  labels:
+    app: mlops-fastapi
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "1000m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  tls:
+  - hosts:
+    - mlops-fastapi.aks-cortex-prod-003.acml.com
+  rules:
+    - host: mlops-fastapi.aks-cortex-prod-003.acml.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mlops-fastapi
+                port:
+                  name: http
