@@ -40,6 +40,7 @@ def get_prediction(data: str, response: Response):
 @app.post("/teddy_cnn_predict", status_code=202)
 async def teddy_cnn_predict(payload: UserPredictions, background_tasks: BackgroundTasks):
     payload = payload.dict()
+
     run_id = pd.Timestamp.now().strftime('%Y-%m-%d-%H-%M-%S')
     background_tasks.add_task(api.teddy_cnn_model_predict, payload)
     return {
@@ -48,8 +49,11 @@ async def teddy_cnn_predict(payload: UserPredictions, background_tasks: Backgrou
     }
 
 
+
+
 @app.post("/kai_predict", status_code=201)
 def kai_predict(payload: UserPredictions):
+    
     payload = payload.dict()
     run_id, message = pd.Timestamp.now().strftime('%Y-%m-%d-%H-%M-%S'), payload.get("message")
     result = {
