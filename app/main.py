@@ -8,7 +8,20 @@ from app.api import api
 
 app = FastAPI()
 
+# Endpoint for readiness probe
+@app.get("/health/readiness")
+async def readiness():
+    # Add any checks that determine if the app is ready to handle requests
+    # For example, check if necessary services are available, database connections are working, etc.
+    return {"status": "ok"}
 
+# Endpoint for liveness probe
+@app.get("/health/liveness")
+async def liveness():
+    # Add checks to determine if the app is still alive and functioning properly
+    # This could include checking the responsiveness of key services or components
+    return {"status": "ok"}
+    
 @app.get("/")
 def root():
     return {"message": "Fast API in Python"}
@@ -53,7 +66,7 @@ async def teddy_cnn_predict(payload: UserPredictions, background_tasks: Backgrou
 
 @app.post("/kai_predict", status_code=201)
 def kai_predict(payload: UserPredictions):
-    
+
     payload = payload.dict()
     run_id, message = pd.Timestamp.now().strftime('%Y-%m-%d-%H-%M-%S'), payload.get("message")
     result = {
