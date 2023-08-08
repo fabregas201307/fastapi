@@ -76,7 +76,7 @@ spec:
   selector:
     app: mlops-fastapi
   ports:
-  - protocal: TCP
+  - protocol: TCP
     name: http
     port: 7878
     targetPort: 7878
