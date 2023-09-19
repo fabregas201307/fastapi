@@ -43,7 +43,9 @@ RUN addgroup --system --gid 107 prod && \
     adduser --system --uid 106 mlops --ingroup prod --home /home/mlops
 USER mlops
 
-CMD ["uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
+# CMD ["uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
+CMD ["/usr/local/bin/uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
+
 
 
 # copy project
