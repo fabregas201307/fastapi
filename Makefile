@@ -1,4 +1,4 @@
-RELEASE_NAME=mlops-fastapi
+RELEASE_NAME=abalpha-kalotay-pricer
 IMAGE_NAME=ACRFIQUANTITPROD001.AZURECR.IO/${RELEASE_NAME}
 SHA:=$(if $(SHA),$(SHA),$(shell git rev-parse --short HEAD))
 REPO_NAME=$(shell git config --get remote.origin.url | sed 's/.*\/\([^ ]*\/[^.]*\).*/\1/' | sed -e "s/\//-/g")
@@ -13,7 +13,7 @@ BUILD_ENV:=$(if $(BUILD_ENV),$(BUILD_ENV),dev)
 
 CLUSTER_NAME=aks-cortex-prod-003
 CLUSTER_NAMESPACE=fiquantit-prod
-DEPLOYMENT_SERVICE_NAME=mlops-fastapi
+DEPLOYMENT_SERVICE_NAME=abalpha-kalotay-pricer
 
 build:
 	$(info FULL_IMAGE_TAG=${FULL_IMAGE_TAG}...)
