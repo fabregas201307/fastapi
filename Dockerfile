@@ -90,8 +90,8 @@ RUN addgroup --system prod \
 RUN python -m pip install --upgrade pip \
     && pip install --upgrade --no-cache-dir --upgrade wheel setuptools twine Cython==3.0.3 build pip-system-certs==4.0 numpy=1.24.3 auditwheel pandas==2.0.3 scipy==1.13.1 statsmodels=0.14.2 pyDex pyodbc pymssql pyMongo==4.3.3 \
     && filelock requests tzlocal quantlib-python openpyxl xlswriter numexpr xlrd==1.2.0 ctds tables cx_Oracle==8.3.0 pyarrow==12.0.1 fastparquet python-dateutil \
-    && pip install --upgrade --no-cache-dir --trusted-host py311-pypi.aks-cortex-prod-003.acml.com --pre --index-url https://py311-pypi.aks-cortex-prod-003.acml.com/simple/ abutils sqlanydb ParallelDBControl ablogger turbodbc==4.11.1 abRegularBatch \
-    && pip install --upgrade --no-cache-dir --trusted-host py311-pypi.aks-cortex-prod-003.acml.com --pre --index-url https://py311-pypi.aks-cortex-prod-003.acml.com/simple/ KalogayNative \
+    && pip install --upgrade --no-cache-dir --trusted-host py311-pypi.aks-fiquantit-prod-001.acml.com --pre --index-url https://py311-pypi.aks-fiquantit-prod-001.acml.com/simple/ abutils sqlanydb ParallelDBControl ablogger turbodbc==4.11.1 abRegularBatch \
+    && pip install --upgrade --no-cache-dir --trusted-host py311-pypi.aks-fiquantit-prod-001.acml.com --pre --index-url https://py311-pypi.aks-fiquantit-prod-001.acml.com/simple/ KalogayNative \
     && pip install --upgrade --no-cache-dir pyMongo
 
 ENV LD_LIBRARY_PATH="/usr/local/lib/python3.9/site-packages/KalotayNative:${LD_LIBRARY_PATH:-}"

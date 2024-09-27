@@ -97,9 +97,9 @@ metadata:
 spec:
   tls:
   - hosts:
-    - abalpha-kalotay-pricer.aks-cortex-prod-003.acml.com
+    - abalpha-kalotay-pricer.aks-fiquantit-prod-001.acml.com
   rules:
-    - host: abalpha-kalotay-pricer.aks-cortex-prod-003.acml.com
+    - host: abalpha-kalotay-pricer.aks-fiquantit-prod-001.acml.com
       http:
         paths:
           - path: /

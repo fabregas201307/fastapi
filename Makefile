@@ -11,7 +11,7 @@ OVERWRITE_IMAGE_TAG:=$(IMAGE_NAME):latest
 SCAN_IMAGE_TAG:=$(RELEASE_NAME):latest
 BUILD_ENV:=$(if $(BUILD_ENV),$(BUILD_ENV),dev)
 
-CLUSTER_NAME=aks-cortex-prod-003
+CLUSTER_NAME=aks-fiquantit-prod-001
 CLUSTER_NAMESPACE=fiquantit-prod
 DEPLOYMENT_SERVICE_NAME=abalpha-kalotay-pricer
 
