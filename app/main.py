@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from starlette.responses import Response
 import pandas as pd
 
-from app.db.models import UserAnswer, UserPredictions
+from app.db.models import UserAnswer, UserPredictions, BondMetaData
 from app.api import api
 
 
@@ -76,6 +76,19 @@ def kai_predict(payload: UserPredictions):
     return result
 
 
+
+@app.post("/kalotay_pricer", status_code=201)
+def kalotay_pricing(payload: BondMetaData):
+
+    payload = payload.dict()
+    run_id, message = pd.Timestamp.now().strftime('%Y-%m-%d-%H-%M-%S'), payload.get("message")
+    
+    
+    result = {
+        "run_id": run_id,
+        "result": api.kai_model_predict(message),
+    }
+    return result
 
 # @app.get("/alternatives/{question_id}")
 # def read_alternatives(question_id: int):

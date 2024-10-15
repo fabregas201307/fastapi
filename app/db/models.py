@@ -10,3 +10,7 @@ class Answer(BaseModel):
 class UserAnswer(BaseModel):
     user_id: int
     answers: List[Answer]
+
+class BondMetaData(BaseModel):
+    user_id: int
+    answers: List[Answer]
