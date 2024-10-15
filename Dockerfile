@@ -149,8 +149,10 @@ RUN whoami && \
     umask 0000
 
 # CMD ["uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
-CMD ["/usr/local/bin/uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
+# CMD ["/usr/local/bin/uvicorn", "app.main:app", "--reload", "--workers", "1", "--host", "0.0.0.0", "--port", "7878"]
 
+EXPOSE 7878
+CMD ["/usr/local/bin/gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:7878"]
 
 
 # copy project
