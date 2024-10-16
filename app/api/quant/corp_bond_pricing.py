@@ -12,13 +12,14 @@ def add_call_schedule(call_schedule:str, trade_date:str, bond):
     if len(call_schedule) > 0:
         for call in call_schedule:
             if pd.to_datetime(call.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
-                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5]), float(call.split("@")[-1]))
+                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
 
 
 def get_oas(cur_df: pd.DataFrame):
     """
     cur_df:  pandas dataframe with columns 
-        cusip(could be fake), trade_date, price, maturity_date, coupon, first_coupon_date, courpon_freq,
+        cusip(could be fake), trade_date, 
+        price, maturity_date, coupon, first_coupon_date, courpon_freq,
         issue_date, oid_date, 
 
     """
@@ -67,5 +68,9 @@ def get_oas(cur_df: pd.DataFrame):
     data.loc[flag_4].apply(lambda row: row["akaapi_bond"].SetCallAmerican(True), axis=1)
     data.loc[flag_5].apply(lambda row: row["akaapi_bond"].SetCallAmerican(False), axis=1)
     data.loc[flag_6].apply(lambda row: row["akaapi_bond"].SetNoticePeriod(row["call_days_notice"]), axis=1)
+
+    if len(data.loc[data["put_typ"] == "MANDATORY"]) > 0:
+        flag_7 = (data["put_typ"] == "MANDATORY") & ((~data["nxt_put_px"].isna()) | (~(data["nxt_put_px"] == 0))) & 
+        data.loc
 
 
