@@ -16,6 +16,23 @@ def add_call_schedule(call_schedule:str, trade_date:pd.Series, bond):
                 bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
 
 
+def add_put_schedule(call_schedule:str, trade_date:pd.Series, bond):
+    trade_date = trade_date.unique()[0]  ## temporarily assume only one unique trade_date
+    call_schedule = call_schedule.split("|")
+    if len(call_schedule) > 0:
+        for call in call_schedule:
+            if pd.to_datetime(call.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
+                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
+
+def add_step_schedule(step_schedule:str, bond):
+    trade_date = trade_date.unique()[0]  ## temporarily assume only one unique trade_date
+    call_schedule = call_schedule.split("|")
+    if len(call_schedule) > 0:
+        for call in call_schedule:
+            if pd.to_datetime(call.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
+                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
+
+
 def get_oas(cur_df: pd.DataFrame):
     """
     cur_df:  pandas dataframe with columns 
@@ -126,5 +143,21 @@ def get_oas(cur_df: pd.DataFrame):
     data.loc[data["day_cnt_des"] == "US MUNI:ACT/360"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_360), axis=1)
     data.loc[data["day_cnt_des"] == "US MUNI: ACT/365"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_365), axis=1)
     data.loc[data["day_cnt_des"] == "US MUNI: ACT/ACT"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_ACT), axis=1)
-    
+    data.loc[data["day_cnt_des"] == "US MUNI: ACT/ACT NON-EO"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_NO_LEAP_365), axis=1)
+
+    # set the coupon frequency
+    data.loc[data["cpn_freq"] == 1].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_ANNUAL), axis=1)
+    data.loc[data["cpn_freq"] == 2].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_SEMIANNUAL), axis=1)
+    data.loc[data["cpn_freq"] == 4].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_QUARTERLY), axis=1)
+    data.loc[data["cpn_freq"] == 12].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_MONTHLY), axis=1)
+    data.loc[data["cpn_freq"] == 52].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_ANNUAL_BY_WEEKS), axis=1)
+    data.loc[~data["cpn_freq"].isin(1,2,4,12,52)].apply(lambda row: row["akaapi_bond"].SetFrequency(AkaApi.Bond.FREQ_INT_AT_MATURITY), axis=1)
+
+    # add step schedule
+    data.loc[(~data["stepup_cpn_schedule"].isnull())].apply(lambda row: add_step_schedule(row["stepup_cpn_schedule"], row["akaapi_bond"]), axis=1)
+
+    # add put schedule
+    data.loc[(~data["stepup_cpn_schedule"].isnull())].apply(lambda row: add_put_schedule(row["put_schedule"], row["trade_date"], row["akaapi_bond"]), axis=1)
+
+
 
