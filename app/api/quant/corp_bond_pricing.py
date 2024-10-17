@@ -122,4 +122,9 @@ def get_oas(cur_df: pd.DataFrame):
     # set the daycount
     data.loc[data["day_cnt_des"].isna(), "day_cnt_des"] = "US MUNI: 30/360"   # TODO: change to corp bond
     data.loc[~data["day_cnt_des"].str.contains("US MUNI", na=False), "day_cnt_des"] = "US MUNI: " + data.loc[~data["day_cnt_des"].str.contains("US MUNI"), "day_cnt_des"]   # TODO: change to corp bond
-    data.loc[data["day_cnt_dex"] == "US MUNI: 30/360"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.DayCount.DC_30_360), axis=1)
+    data.loc[data["day_cnt_des"] == "US MUNI: 30/360"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_30_360), axis=1)
+    data.loc[data["day_cnt_des"] == "US MUNI:ACT/360"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_360), axis=1)
+    data.loc[data["day_cnt_des"] == "US MUNI: ACT/365"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_365), axis=1)
+    data.loc[data["day_cnt_des"] == "US MUNI: ACT/ACT"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.Bond.DC_ACT_ACT), axis=1)
+    
+
