@@ -7,7 +7,8 @@ def t_1_settle_date(trade_date: str) -> str:
     result = (pd.to_datetime(trade_date) + pd.offsets.CustomBusinessDay(1)).strftime("%Y_%m_%d")
     return result
 
-def add_call_schedule(call_schedule:str, trade_date:str, bond):
+def add_call_schedule(call_schedule:str, trade_date:pd.Series, bond):
+    trade_date = trade_date.unique()[0]  ## temporarily assume only one unique trade_date
     call_schedule = call_schedule.split("|")
     if len(call_schedule) > 0:
         for call in call_schedule:
@@ -70,7 +71,55 @@ def get_oas(cur_df: pd.DataFrame):
     data.loc[flag_6].apply(lambda row: row["akaapi_bond"].SetNoticePeriod(row["call_days_notice"]), axis=1)
 
     if len(data.loc[data["put_typ"] == "MANDATORY"]) > 0:
-        flag_7 = (data["put_typ"] == "MANDATORY") & ((~data["nxt_put_px"].isna()) | (~(data["nxt_put_px"] == 0))) & 
-        data.loc
+        flag_7 = (data["put_typ"] == "MANDATORY") & ((~data["nxt_put_px"].isna()) | (~(data["nxt_put_px"] == 0))) & (~data["put_schedule"].isna())
+        flag_8 = (data["put_typ"] == "MANDATORY") & ((~data["nxt_put_px"].isna()) | (~(data["nxt_put_px"] == 0)))
+        data.loc[flag_7, "nxt_put_px"] = data.loc[flag_8, "put_schedule"].str.split("@").str[1]
+        data.loc[flag_7, "nxt_put_dt"] = data.loc[flag_8, "put_schedule"].str.split("@").str[0]
 
+    flag_9 = ~((data["put_typ"]=="MANDATORY") & (data["nxt_put_px"].isnull() | (data["nxt_put_px"] == 0)))
+    data = data.loc[flag_9]
+    idx = list((~data["treat_as_preref"]) & (data["put_typ"] == "MANDATORY"))
 
+    if len(data.loc[idx]) > 0:
+        data.loc[idx, "maturity_date"] = data.loc[idx, "nxt_put_dt"]
+        data.loc[idx, "akaapi_bond"] = data.loc[idx].apply(lambda row:
+                                                           AkaApi.Bond(
+                                                               row["cusip"],
+                                                               AkaApi.Date(int((str(row["issue_date"].year) + str(row["issue_date"].month).zfill(2) + str(row["issue_date"].day).zfill(2)))),
+                                                               AkaApi.Date(int((str(row["maturity_date"].year) + str(row["maturity_date"].month).zfill(2) + str(row["maturity_date"].day).zfill(2)))),
+                                                               row["cpn"]
+                                                           ), axis=1)
+        data.loc[idx].apply(lambda row: row["akaapi_bond"].SetRedemptionPrice(float(row["nxt_put_px"])), axis=1)
+
+    # process bonds that are completely called
+    data = data.loc[~((data["completely_called"] == "Y") & (data["nxt_call_dt"].isna()))]
+    idx = ((~data["treat_as_preref"]) & (data["completely_called"] == "Y"))
+
+    if len(data.loc[idx]) > 0:
+        data.loc[idx, "maturity_date"] = data.loc[idx, "nxt_call_dt"]
+        data.loc[idx, "akaapi_bond"] = data.loc[idx].apply(lambda row:
+                                                           AkaApi.Bond(
+                                                               row["cusip"],
+                                                               AkaApi.Date(int((str(row["issue_date"].year) + str(row["issue_date"].month).zfill(2) + str(row["issue_date"].day).zfill(2)))),
+                                                               AkaApi.Date(int((str(row["maturity_date"].year) + str(row["maturity_date"].month).zfill(2) + str(row["maturity_date"].day).zfill(2)))),
+                                                               row["cpn"]
+                                                           ), axis=1)
+        data.loc[idx & (data["completely_called"] == "Y")].apply(lambda row: add_call_schedule(row["call_schedule"], row["trade_date"], row["AKAAPI_BOND"]), axis=1)
+        data.loc[idx].apply(lambda row: row["akaapi_bond"].SetRedemptionPrice(row["nxt_call_px"]), axis=1)
+
+    # add call schedule if not reated as preref
+    flag_10 = ~((~data["treat_as_preref"]) & (data["callable"] == "Y") & (data["completely_called"] == "N") & (data["call_schedule"].isnull()))
+    flag_11 = ((~data["treat_as_preref"]) & (data["callable"] == "Y") & (data["completely_called"] == "N"))
+    flag_12 = flag_11 & (data["call_freq"] == "T") & (data["zero_cpn"] == "N")
+    flag_13 = flag_11 & (~data["call_freq"] == "T") & (data["zero_cpn"] == "N")
+
+    data = data.loc[flag_10]
+    data.loc[flag_11].apply(lambda row: add_call_schedule(row["call_schedule"], row["trade_date"], row["akaapi_bond"]), axis=1)
+    data.loc[flag_11].apply(lambda row: row["akaapi_bond"].SetNoticePeriod(row["call_days_notice"]), axis=1)
+    data.loc[flag_12].apply(lambda row: row["akaapi_bond"].SetCallAmerican(True), axis=1)
+    data.loc[flag_13].apply(lambda row: row["akaapi_bond"].SetCallAmerican(False), axis=1)
+
+    # set the daycount
+    data.loc[data["day_cnt_des"].isna(), "day_cnt_des"] = "US MUNI: 30/360"   # TODO: change to corp bond
+    data.loc[~data["day_cnt_des"].str.contains("US MUNI", na=False), "day_cnt_des"] = "US MUNI: " + data.loc[~data["day_cnt_des"].str.contains("US MUNI"), "day_cnt_des"]   # TODO: change to corp bond
+    data.loc[data["day_cnt_dex"] == "US MUNI: 30/360"].apply(lambda row: row["akaapi_bond"].SetDayCount(AkaApi.DayCount.DC_30_360), axis=1)
