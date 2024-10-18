@@ -16,21 +16,19 @@ def add_call_schedule(call_schedule:str, trade_date:pd.Series, bond):
                 bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
 
 
-def add_put_schedule(call_schedule:str, trade_date:pd.Series, bond):
+def add_put_schedule(put_schedule:str, trade_date:pd.Series, bond):
     trade_date = trade_date.unique()[0]  ## temporarily assume only one unique trade_date
-    call_schedule = call_schedule.split("|")
-    if len(call_schedule) > 0:
-        for call in call_schedule:
-            if pd.to_datetime(call.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
-                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
+    put_schedule = put_schedule.split("|")
+    if len(put_schedule) > 0:
+        for put in put_schedule:
+            if pd.to_datetime(put.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
+                bond.SetCall(AkaApi.Date(int(put.split("@")[0][6:] + put.split("@")[0][:2] + put.split("@")[0][3:5])), float(put.split("@")[-1]))
 
 def add_step_schedule(step_schedule:str, bond):
-    trade_date = trade_date.unique()[0]  ## temporarily assume only one unique trade_date
-    call_schedule = call_schedule.split("|")
-    if len(call_schedule) > 0:
-        for call in call_schedule:
-            if pd.to_datetime(call.split("@")[0], format="%m-%d-%Y") >= pd.to_datetime(trade_date):
-                bond.SetCall(AkaApi.Date(int(call.split("@")[0][6:] + call.split("@")[0][:2] + call.split("@")[0][3:5])), float(call.split("@")[-1]))
+    step_schedule = step_schedule.split("|")
+    for step in step_schedule:
+        step = step.split("@")
+        bond.SetCoupon(AkaApi.Date(int(step[0][6:] + step[0][:2] + step[0][3:5])), float(step[1]))
 
 
 def get_oas(cur_df: pd.DataFrame):
@@ -157,7 +155,20 @@ def get_oas(cur_df: pd.DataFrame):
     data.loc[(~data["stepup_cpn_schedule"].isnull())].apply(lambda row: add_step_schedule(row["stepup_cpn_schedule"], row["akaapi_bond"]), axis=1)
 
     # add put schedule
-    data.loc[(~data["stepup_cpn_schedule"].isnull())].apply(lambda row: add_put_schedule(row["put_schedule"], row["trade_date"], row["akaapi_bond"]), axis=1)
+    data.loc[(~data["put_schedule"].isnull())].apply(lambda row: add_put_schedule(row["put_schedule"], row["trade_date"], row["akaapi_bond"]), axis=1)
+    data.loc[(~data["put_schedule"].isnull())].apply(lambda row: row["akaapi_bond"].SetPutAmerican(True), axis=1)
 
+    # set the issue price
+    data = data.loc[~data["issue_price"].isnull()]
+    data.apply(lambda row: row["akaapi_bond"]).SetIssuePrice(row["issue_price"], axis=1)
 
+    # set first coupon
+    data = data.loc[~data["first_coupon_date"].isnull()]
+    data.apply(lambda row: row["akaapi_bond"].SetFirstCoupon(AkaApi.Date(int(str(row["first_coupon_date"].year) + str(row["first_coupon_date"].month).zfill(2) + str(row["first_coupon_date"].day).zfill(2)))), axis=1)
+
+    # set muni yield method
+    data.apply(lambda row: row["akaapi_bond"].SetYieldMethod(AkaApi.Bond.YLD_MUNI), axis=1)
+
+    # add holidays
+    holidays_start_date = int((pd.to_datetime(data["trade_date"]).min() - pd.DateOffset(years=1)).strftime("%Y%m%d"))
 
