@@ -3,6 +3,28 @@ from KalotayNative import AkaApi, corp_get_interest_rate_model, corp_bond_value
 from KalotayNative import CorpBond as Bond
 import csv
 
+def get_holidays_list(start_date, end_date):
+    """
+    obtain a list of all bank holidays between the specified dates
+
+    Parameters
+    ----------
+    start_date : str
+        start date in the format "YYYYMMDD"
+    end_date : str
+        end date in the format "YYYYMMDD"
+    """
+    prd = abdata.ABDataBase("sqlserver", "PRD")
+    query = f"""
+             select distinct DATE
+             from FIQModel.dbo.HOLIDAY_SCHEDULE
+             where CALENDAR_CODE in ('NYB', 'NYS')
+             and DATE BETWEEN '{start_date}' and '{end_date}'
+            """
+    holidays = prd.run_query(query)
+    return holidays
+
+
 def t_1_settle_date(trade_date: str) -> str:
     result = (pd.to_datetime(trade_date) + pd.offsets.CustomBusinessDay(1)).strftime("%Y_%m_%d")
     return result
@@ -170,5 +192,13 @@ def get_oas(cur_df: pd.DataFrame):
     data.apply(lambda row: row["akaapi_bond"].SetYieldMethod(AkaApi.Bond.YLD_MUNI), axis=1)
 
     # add holidays
-    holidays_start_date = int((pd.to_datetime(data["trade_date"]).min() - pd.DateOffset(years=1)).strftime("%Y%m%d"))
+    holidays_start_date = (pd.to_datetime(data["trade_date"]) - pd.DateOffset(months=12)).strftime("%Y%m%d")
+    holidays_end_date = (pd.to_datetime(data["trade_date"]) + pd.DateOffset(months=12)).strftime("%Y%m%d")
+    holidays_list = [str(i) for i in list(get_holidays_list(holidays_start_date, holidays_end_date)["date"])]
+    for holiday in holidays_list:
+        data.apply(lambda row: row["akaapi_bond"].SetHoliday(AkaApi.Date(int(holiday[:4] + holiday[5:7] + holiday[8:]))), axis=1)
+
+    # end_time_bond = time.time()
+
+    return data
 
